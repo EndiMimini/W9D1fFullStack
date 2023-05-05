@@ -1,13 +1,32 @@
 from flask_app import app
 from flask_app.models.user import User
+from flask_app.models.post import Post
+
 from flask import render_template, redirect, session, request
 
 @app.route('/')
 def index():
     #I will retreave all the users in my database
     users = User.get_all()
-    return render_template('users.html', users= users)
+    posts = Post.get_all()
+    return render_template('users.html', users= users, posts = posts)
 
+@app.route('/loginPage')
+def loginPage():
+    return render_template('loginPage.html')
+
+@app.route('/login', methods = ['POST'])
+def login():
+    data = {
+        'email': request.form['email']
+    }
+    if not User.get_user_by_email(data):
+        return redirect(request.referrer)
+    
+    user = User.get_user_by_email(data)
+
+    session['user_id'] = user['id']
+    return redirect('/')
 
 @app.route('/add/user')
 def addUser():
@@ -48,5 +67,6 @@ def deleteUser(id):
     data = {
         'user_id': id,
     }
+    Post.delete_all_user_posts(data)
     User.delete(data)
     return redirect(request.referrer)
